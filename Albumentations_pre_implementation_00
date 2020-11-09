@@ -1,0 +1,67 @@
+
+import cv2
+from PIL import Image, ImageFilter
+import albumentations as album
+import matplotlib.pyplot as plt
+# インライン表示(jupyter用)
+#%matplotlib inline
+
+
+
+# 画像の取得
+im_ = Image.open("/content/drive/My Drive/colab_try/data/botl.jpg")
+im = cv2.imread("/content/drive/My Drive/colab_try/data/botl.jpg")
+
+
+
+# 画像を表示する
+def visualize(image):
+    plt.figure(figsize=(10, 10))
+    plt.axis('off')
+    plt.imshow(image)
+
+
+"""
+Albumentationsの実装について
+1,単一の変換のみ行う
+2,複数の変換をまとめて行う
+3,複数の変換をまとめて行うが、確率的に変換割合を決めて実行する
+4,できない事
+"""
+
+
+# albumentationsのconposeでまとめて実装してる
+transform = album.Compose([
+        album.RandomRotate90(),
+        album.Flip(),
+        album.Transpose(),
+        album.OneOf([
+            album.IAAAdditiveGaussianNoise(),
+            album.GaussNoise(),
+        ], p=0.5),
+        album.OneOf([
+            album.MotionBlur(p=.2),
+            album.MedianBlur(blur_limit=3, p=0.1),
+            album.Blur(blur_limit=3, p=0.1),
+        ], p=0.5),
+        album.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.2, rotate_limit=45, p=0.2),
+        album.OneOf([
+            album.OpticalDistortion(p=0.3),
+            album.GridDistortion(p=.1),
+            album.IAAPiecewiseAffine(p=0.3),
+        ], p=0.5),
+        album.OneOf([
+            album.CLAHE(clip_limit=2),
+            album.IAASharpen(),
+            album.IAAEmboss(),
+            album.RandomBrightnessContrast(),            
+        ], p=0.5),
+        album.HueSaturationValue(p=0.3),
+    ])
+
+# Data Augumentationの実行部分
+random.seed(720) 
+augmented_image = transform(image=im)['image']
+visualize(augmented_image)
+
+
